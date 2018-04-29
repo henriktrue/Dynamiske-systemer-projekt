@@ -1,10 +1,10 @@
-%% Målinger DSE opgave
+%% MÃ¥linger DSE opgave
 %  Kim Petersen, Henrik Truelsen, Viggo Lysdahl, Mark Chylinski 04/04-2018
 
 %% Generelt setup:
 clear; close all; clc; format compact
 
-%% Indlæsning af data til step respons
+%% IndlÃ¦sning af data til step respons
 sig1=csvread('step_12V.csv');
 sig2=csvread('step_09V.csv');
 sig3=csvread('step_06V.csv');
@@ -32,19 +32,19 @@ output4= sig4(:, 3);
 
 
 %% Variabler til step respons
-%øvre samt nedre grænse
+% Ã¸vre samt nedre grÃ¦nse
 lower = 0.5466;
 upper = 1.4055;
 
-%skabelsen af nedre/øvre linjer
+% skabelsen af nedre/Ã¸vre linjer
 lower_line = lower*ones(1,8192);
 upper_line = upper*ones(1,8192);
 
-%variabel y limit til plot
+% variabel y limit til plot
 ylim_plot = upper + 0.2;
 
-% udregning af fs udfra første signal
-Ts1 = input1(2)-input1(1);
+% udregning af fs udfra fÃ¸rste signal
+Ts1 = sig1(2)-sig1(1);
 fs = 1/Ts1; %400 hertz
 
 %% Variabler til frekvensrespons
@@ -93,7 +93,7 @@ title(lgd,'akser');
 
 figure
 
-%plot af step respons med øvre/under grænse
+%plot af step respons med Ã¸vre/under grÃ¦nse
 subplot(1,2,1:2)
 plot(time1, output1, ':k'), grid, hold on
 plot(time2, output2, ':k'), grid, hold on
@@ -103,7 +103,7 @@ plot(time1, lower_line, 'r'), grid, hold on
 plot(time1, upper_line, 'r'), grid;
 xlabel('tid i s'), ylabel('volt'), title('Step respons med inputs');
 ylim([0.4 ylim_plot]), xlim([-0.5 8]);
-lgd = legend('potentiometer 1.2V', 'potentiometer 0.9V', 'potentiometer 0.6V', 'potentiometer 0.3V', 'nedre region', 'øvre region');
+lgd = legend('potentiometer 1.2V', 'potentiometer 0.9V', 'potentiometer 0.6V', 'potentiometer 0.3V', 'nedre region', 'Ã¸vre region');
 title(lgd,'akser');
 
 figure
@@ -120,10 +120,11 @@ title('fase respons');
 xlabel('Frekvens i Hz');
 ylabel('fase i grader');
 
+%% udregnede overfÃ¸ringsfunktion
+sys_id_output = output2 - 0.578;
+sys_id_input = input2 - 1.56;
 
-
-%% Beregning af værdier
-T = 5.86 - 2.6;     % værdier aflæst på graf for output
+T = 5.86 - 2.6;     % vÃ¦rdier aflÃ¦st pÃ¥ graf for output
 fd = 1/T;
 wd = 2*pi*fd;
 
@@ -133,40 +134,36 @@ zeta = -log(MP)/sqrt(pi^2+(log(MP)^2)); % Dampening ratio
 
 wn = wd/sqrt(1-(zeta^2));
 
-%% overføringsfunktion
-% b = 3.85533225;     % første udregning
-% b = wd^2;           % anden udregning
-b = 1.3;            % trial and error
-% a = 0.76477;        % første udregning
-a = 2*0.37*wn;      % anden udregning
-% a = 0.75;           % trial and error
-% k = 0.4556;         % første udregning
-% k = 0.409/0.926;    % anden udregning
-k = 0.814;          % trial and error
-z1 = 0.5;           % nulpunkt 1
-% z2 = 0;             % nulpunkt 2
-zero = [z1];        % nulpunkt vektor til zplane()
-num1 = k*b;
-num2 = num1*z1;       % til 1 nul-punkt
-% num2 = b*z1+b*z2;   % til 2 nul-punkter
-% num3 = num1*z1*z2;  % til 2 nul-punkter
+b = wd^2;           
+a = 2*zeta*wn
 
-% num = [num1]              % ingen nul-punkter i TF
-num = [num1 num2]         % 1 nul-punkt i YF
-% num = [num1 num2 num3]    % 2 nul-punkter i TF
-den = [1 a b]
+% overfÃ¸ringsfunktion
+num = [0.41 * b];
+den = [1 a b];
 
 G = tf(num, den)
 
 figure
 step(G); grid minor; hold on
-plot(time2, output2 - 0.58, ':k'); grid minor; hold on;
-plot(time2, input2 - 1.56, 'r');
-xlim([-0.5 16]);
-lgd = legend('overføringsfunktion', '0.9V output', 'input');
+plot(time2, sys_id_output, 'g'); grid minor; hold on;
+plot(time2, sys_id_input, 'r');
+title('udregnet overfÃ¸ringsfunktion');
+xlim([0 12]);
+lgd = legend('overfÃ¸ringsfunktion', '0.9V output', 'input');
 title(lgd,'akser');
 
+%% system identification tool fundet overfÃ¸ringsfunktion
 
-%% justering
+num = [(-0.02934) (-0.145) 0.8204];
+den = [1 0.7996 1.757];
+
+G = tf(num, den)
+
 figure
-zplane(zero', roots(den)); grid on;
+step(G); grid minor; hold on
+plot(time2, sys_id_output, 'g'); grid minor; hold on;
+plot(time2, sys_id_input, 'r');
+title('system identification overfÃ¸ringsfunktion');
+xlim([0 12]);
+lgd = legend('overfÃ¸ringsfunktion', '0.9V output', 'input');
+title(lgd,'akser');
