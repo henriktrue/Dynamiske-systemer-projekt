@@ -159,7 +159,11 @@ den = [1 0.7996 1.757];
 
 G = tf(num, den)
 
+zeros = zero(G);
+poles = pole(G);
+
 figure
+subplot(1,3,1:2);
 step(G); grid minor; hold on
 plot(time2, sys_id_output, 'g'); grid minor; hold on;
 plot(time2, sys_id_input, 'r');
@@ -167,3 +171,5 @@ title('system identification overføringsfunktion');
 xlim([0 12]);
 lgd = legend('overføringsfunktion', '0.9V output', 'input');
 title(lgd,'akser');
+subplot(1,3,3);
+zplane(zeros, poles);
